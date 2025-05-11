@@ -1,0 +1,768 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Bibliographic Records{% endblock %}
+
+{% block content %}
+<style>
+body {
+    background-image: url("{{ url_for('static', filename='images/library-bg.jpg') }}");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-attachment: fixed;
+    background-size: cover;
+}
+
+.background-fade {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    background: rgba(255, 255, 255, 0.85);
+    pointer-events: none;
+}
+
+.title-preview {
+    display: -webkit-box;
+    display: box;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    -webkit-box-orient: vertical;
+    box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    line-height: 1.3;
+    max-height: 5.2em;
+    margin-bottom: 4px;
+    font-weight: bold;
+    color: #1a237e;
+    padding-right: 10px;
+}
+.container {
+    max-width: 90% !important;  /* Override Bootstrap's default container width */
+    width: 90%;
+    margin: 0 auto;
+}
+.resizable-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: #f4f4f4;
+}
+
+.resizable-table thead th {
+    position: sticky;
+    top: 0;
+    background-color: #f4f4f4;
+    z-index: 100;
+}
+
+th {
+    padding: 8px 6px;
+    text-align: center;
+    font-size: 15px;
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+.resizable-table thead tr {
+    background-color: #f4f4f4;
+}
+
+.search-container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.resizable-table thead th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #2c3e50;
+    border-bottom: 2px solid #dee2e6;
+    padding: 12px 8px;
+}
+
+.table-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    padding: 1px;
+    margin-top: 20px;
+}
+
+.btn-primary {
+    background-color: #1a73e8;
+    border-color: #1a73e8;
+}
+
+.pagination {
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+select.form-select {
+    border-color: #dee2e6;
+    min-width: 150px;
+    width: auto;
+}
+
+details summary {
+    color: #1a73e8;
+    padding: 4px 0;
+}
+
+.abstract-container {
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.gap-2 {
+    gap: 0.75rem !important;
+}
+
+.search-container form {
+    justify-content: center;
+    align-items: center;
+}
+
+.search-container input.form-control {
+    min-width: 250px;
+    flex-grow: 1;
+    max-width: 400px;
+}
+.type-filter {
+    background: #f8f9fa;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.type-filter-header {
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #2c3e50;
+}
+
+.type-filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.type-option {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: white;
+    border: 1px solid #dee2e6;
+    margin: 0;
+}
+
+.type-option:hover {
+    background: #e9ecef;
+}
+
+.type-option input[type="checkbox"] {
+    margin: 0;
+}
+.resizable-table td {
+    position: relative;  /* For absolute positioning of show full link */
+}
+
+.show-full-link {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #007bff;
+    text-decoration: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    z-index: 1;
+}
+
+.cell-content {
+    padding-right: 70px; /* Make space for show full link */
+    display: block;
+}
+
+.author-cell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.author-content {
+    display: block;
+    width: 100%;
+    word-break: break-word;
+}
+
+.show-full-btn {
+    align-self: flex-start;
+    background: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    font-size: 12px;
+    color: #007bff;
+    cursor: pointer;
+    border: 1px solid #dee2e6;
+    margin-top: 2px;
+}
+
+.author-details {
+    position: absolute;
+    left: 0;
+    top: 100%;
+    width: 100%;
+    background: white;
+    z-index: 3;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 4px;
+    padding: 8px;
+    margin-top: 4px;
+}
+
+.organization-cell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.authors-list {
+    margin: 10px 0;
+    padding: 10px;
+    background: #fff;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.authors-ul {
+    list-style: none;
+    padding-left: 20px;
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
+.authors-ul li {
+    margin-bottom: 4px;
+}
+
+.primary-author {
+    margin-bottom: 10px;
+}
+.author-item {
+    margin-bottom: 15px;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.primary-author {
+    border-left: 3px solid #1a73e8;
+}
+</style>
+<div class="background-fade"></div>
+<div class="search-container">
+    <form class="d-flex flex-column gap-2" method="get" action="/">
+        <div class="d-flex gap-2 flex-wrap">
+            <input type="text" name="title" class="form-control" style="width: 300px;" 
+                   placeholder="Search by title" value="{{ title_query }}">
+            <input type="text" name="author" class="form-control" style="width: 300px;" 
+                   placeholder="Search by author" value="{{ author_query }}">
+            <input type="text" name="doi" class="form-control" style="width: 300px;"
+                   placeholder="Search by DOI" value="{{ doi_query }}">
+            <select name="per_page" class="form-select" style="width: 150px;">
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10 per page</option>
+                <option value="25" {% if per_page == 25 %}selected{% endif %}>25 per page</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50 per page</option>
+                <option value="100" {% if per_page == 100 %}selected{% endif %}>100 per page</option>
+            </select>
+            <button class="btn btn-primary" style="width: 100px;">Search</button>
+        </div>
+        
+        <div class="type-filter">
+            <div class="type-filter-header">Filter by Type:</div>
+            <div class="type-filter-options">
+                <label class="type-option">
+                    <input type="checkbox" name="types" value="all" 
+                           {% if not selected_types %}checked{% endif %}> 
+                    All Types ({{ filtered_type_counts.values()|sum }}/{{ type_counts.values()|sum }})
+                </label>
+                {% for type in entry_types %}
+                <label class="type-option">
+                    <input type="checkbox" name="types" value="{{ type }}"
+                           {% if type in selected_types %}checked{% endif %}> 
+                    {{ type }} ({{ filtered_type_counts.get(type, 0) }}/{{ type_counts[type] }})
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+    </form>
+</div>
+
+{% if entries %}
+<div class="table-container mt-3">
+    <table class="resizable-table table table-striped">
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th>Type</th>
+                <th>DOI</th>
+                <th>Title</th>
+                <th>Author Name</th>
+                <th>Year</th>
+                <th>Publisher</th>
+                <th>Ref Count</th>
+                <th>Cited By</th>
+                <th>Organization</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+                <tr>
+                    <td>{{ loop.index + (page * per_page) }}</td>
+                    <td>{{ entry['entry_type_name'] }}</td>
+                    <td>
+                        {% if entry['doi'] and entry['doi']|length > 30 %}
+                            <span class="truncated-title">
+                                <a href="https://doi.org/{{ entry['doi'] }}" target="_blank">{{ entry['doi'][:30] }}...</a>
+                                <details>
+                                    <summary style="display:inline; cursor:pointer; color:#007bff; font-weight:normal;">Show full</summary>
+                                    <span style="white-space:normal; word-break:break-word; display:block; max-width:500px;">
+                                        <a href="https://doi.org/{{ entry['doi'] }}" target="_blank">{{ entry['doi'] }}</a>
+                                    </span>
+                                </details>
+                            </span>
+                        {% elif entry['doi'] %}
+                            <a href="https://doi.org/{{ entry['doi'] }}" target="_blank">{{ entry['doi'] }}</a>
+                        {% endif %}
+                    </td>
+                    <td title="{{ entry['title'] }}">
+                        {% if entry['title']|length > 200 %}
+                            <span class="truncated-title">
+                                <span class="title-preview">{{ entry['title'] }}</span>
+                                <details>
+                                    <summary style="display:inline; cursor:pointer; color:#007bff; font-weight:normal;">Show full</summary>
+                                    <span style="white-space:normal; word-break:break-word; display:block; max-width:400px;">
+                                        {{ entry['title'] }}
+                                    </span>
+                                </details>
+                            </span>
+                        {% else %}
+                            <strong>{{ entry['title'] }}</strong>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if entry['author_name'] %}
+                            <strong>{{ entry['author_name'] }}</strong>
+                        {% else %}
+                            <strong>N/A</strong>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% set pub_year = entry['publication_date'].year if entry['publication_date'] is defined and entry['publication_date'] else '' %}
+                        {% if pub_year and pub_year|string|length == 4 and pub_year|string|int > 1000 and pub_year|string|int < 3000 %}
+                            {{ pub_year }}
+                        {% endif %}
+                    </td>
+                    <td>{{ entry['publisher'] or "N/A" }}</td>
+                    <td>{{ entry['reference_count'] or "N/A" }}</td>
+                    <td>{{ entry['is_referenced_by_count'] or "N/A" }}</td>
+                    <td>
+                        {% if entry['organization_name'] and entry['organization_name']|length > 30 %}
+                            <div class="organization-cell">
+                                <div class="author-content">
+                                    {{ entry['organization_name'][:30] }}...
+                                </div>
+                                <details>
+                                    <summary class="show-full-btn">Show full</summary>
+                                    <div class="author-details">
+                                        {{ entry['organization_name'] }}
+                                    </div>
+                                </details>
+                            </div>
+                        {% else %}
+                            {{ entry['organization_name'] }}
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr class="details-row">
+                    <td colspan="10" style="overflow: visible;">
+                        <details>
+                            <summary>Show more</summary>
+                            <div style="overflow-x: auto; max-width: 100vw;">
+                                <strong>Abstract:</strong>
+                                <div class="abstract-container">
+                                    {% if entry['abstract'] %}
+                                        <div class="abstract-preview">{{ entry['abstract'] }}</div>
+                                        <div class="abstract-full d-none">{{ entry['abstract'] }}</div>
+                                        {% if entry['abstract']|length > 300 %}
+                                            <button class="toggle-abstract" onclick="toggleAbstract(this)">Show more</button>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">No abstract available.</span>
+                                    {% endif %}
+                                </div>
+                                <br>
+                                <strong>Authors:</strong>
+                                <div class="authors-list">
+                                    {% set authors = entry['author_details']|fromjson %}
+                                    {% for author in authors %}
+                                        <div class="author-item {% if author.is_primary %}primary-author{% endif %}">
+                                            <div class="author-header">
+                                                <strong>{% if author.is_primary %}Primary Author{% else %}Author{% endif %}</strong>
+                                                <span class="author-name">{{ author.name }}</span>
+                                            </div>
+                                            {% if author.orcid %}
+                                                <div class="author-orcid">
+                                                    <small>ORCID: <a href="{{ author.orcid }}" target="_blank">{{ author.orcid }}</a></small>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <br>
+                                <strong>Container Title:</strong> {{ entry['container_title'] or "N/A" }}<br>
+                                <strong>Score:</strong> {{ entry['score'] or "N/A" }}<br>
+                                <strong>Volume:</strong> {{ entry['volume'] or "N/A" }}<br>
+                                <strong>Issue:</strong> {{ entry['issue'] or "N/A" }}<br>
+                                <strong>Language:</strong> {{ entry['language'] or "N/A" }}<br>
+                                <strong>ISBN:</strong> {{ entry['isbn'] or "N/A" }}<br>
+                                <strong>Page:</strong> {{ entry['page'] or "N/A" }}<br>
+                                <strong>Entry Type:</strong> {{ entry['entry_type_name'] or "N/A" }}<br>
+                                <strong>Citations:</strong>
+                                <div style="white-space: normal; word-break: break-all; max-width: 100%;">
+                                    {% if entry['citations'] %}
+                                        {% set citations = entry['citations'] %}
+                                        {% if citations is string %}
+                                            {% set citations = citations | fromjson %}
+                                        {% endif %}
+                                        {% if citations and citations|length > 0 %}
+                                            <ul style="padding-left: 18px; margin-bottom: 0;">
+                                                {% for doi in citations %}
+                                                    <li style="word-break: break-all;">
+                                                        <a href="https://doi.org/{{ doi }}" target="_blank">{{ doi }}</a>
+                                                        {% if doi in visible_dois %}
+                                                          <a href="{{ url_for('home', doi=doi) }}" target="_blank"
+                                                             class="btn btn-outline-primary btn-sm ms-2">
+                                                              Search in app
+                                                          </a>
+                                                        {% endif %}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </div>
+                                <strong>Cited By:</strong>
+                                <div style="white-space: normal; word-break: break-all; max-width: 100%;">
+                                    {% if entry['cited_by'] %}
+                                        {% set cited_by = entry['cited_by'] %}
+                                        {% if cited_by is string %}
+                                            {% set cited_by = cited_by | fromjson %}
+                                        {% endif %}
+                                        {% if cited_by and cited_by|length > 0 %}
+                                            <ul style="padding-left: 18px; margin-bottom: 0;">
+                                                {% for doi in cited_by %}
+                                                    <li style="word-break: break-all;">
+                                                        <a href="https://doi.org/{{ doi }}" target="_blank">{{ doi }}</a>
+                                                        {% if doi in visible_dois %}
+                                                          <a href="{{ url_for('home', doi=doi) }}" target="_blank"
+                                                             class="btn btn-outline-primary btn-sm ms-2">
+                                                              Search in app
+                                                          </a>
+                                                        {% endif %}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </details>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="pagination">
+  {% if page > 0 %}
+    <a href="{{ url_for('home', title=title_query, author=author_query, types=selected_types, page=page-1, per_page=per_page) }}">Previous</a>
+  {% endif %}
+  <span>Page {{ page + 1 }}</span>
+  {% if entries_count == per_page %}
+    <a href="{{ url_for('home', title=title_query, author=author_query, types=selected_types, page=page+1, per_page=per_page) }}">Next</a>
+  {% endif %}
+</div>
+{% else %}
+<p class="text-muted mt-3">No results found.</p>
+{% endif %}
+
+<style>
+.table-container {
+    max-height: 70vh;      /* Set the visible height for scrolling */
+    overflow-y: auto;      /* Enable vertical scroll */
+    overflow-x: auto;
+    max-width: 100%;
+    padding-bottom: 10px;
+}
+.resizable-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+.resizable {
+    position: relative;
+    white-space: nowrap;
+    padding-right: 10px;
+    min-width: 60px;
+    overflow: hidden;
+}
+th, td {
+    padding: 8px 6px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    vertical-align: middle;
+    font-size: 15px;
+}
+th {
+    position: sticky;
+    top: 0;
+    background-color: #f4f4f4;
+    z-index: 10;  /* Increased z-index */
+    text-align: center;
+    font-size: 15px;
+}
+.resizable-table thead tr {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+}
+.resizable-table th:nth-child(1),
+.resizable-table td:nth-child(1) { /* No. */
+    max-width: 40px;
+    min-width: 30px;
+    width: 40px;
+    text-align: left;
+}
+.resizable-table th:nth-child(2),
+.resizable-table td:nth-child(2) { /* Type */
+    max-width: 90px;
+    min-width: 60px;
+    width: 90px;
+    text-align: left;
+}
+.resizable-table th:nth-child(3),
+.resizable-table td:nth-child(3) { /* DOI */
+    max-width: 180px;
+    min-width: 140px;
+    width: 160px;
+    word-break: break-all;
+    position: relative;
+}
+.resizable-table th:nth-child(4),
+.resizable-table td:nth-child(4) { /* Title */
+    max-width: 450px;
+    min-width: 300px;
+    width: 400px;
+    white-space: normal;
+    overflow: visible;
+    position: relative;
+}
+.resizable-table th:nth-child(5),
+.resizable-table td:nth-child(5) { /* Author Name */
+    max-width: 200px;
+    min-width: 140px;
+    width: 180px;
+}
+.resizable-table th:nth-child(6),
+.resizable-table td:nth-child(6) { /* Year */
+    max-width: 60px;
+    min-width: 40px;
+    width: 60px;
+    text-align: left;
+}
+.resizable-table th:nth-child(7),
+.resizable-table td:nth-child(7) { /* Publisher */
+    max-width: 180px;
+    min-width: 120px;
+    width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.resizable-table th:nth-child(8),
+.resizable-table td:nth-child(8) { /* Ref Count */
+    max-width: 100px;
+    min-width: 80px;
+    width: 90px;
+    text-align: center;
+}
+.resizable-table th:nth-child(9),
+.resizable-table td:nth-child(9) { /* Cited By */
+    max-width: 100px;
+    min-width: 80px;
+    width: 90px;
+    text-align: center;
+}
+.resizable-table th:nth-child(10),
+.resizable-table td:nth-child(10) { /* Organization */
+    max-width: 180px;
+    min-width: 120px;
+    width: 150px;
+    white-space: nowrap;
+    overflow: visible;          /* allow “Show full” pop‑out */
+    text-overflow: ellipsis;
+}
+.truncated-title {
+    display: block;
+    max-width: 100%;
+    word-break: break-word;
+}
+.details-row td {
+    background: #f8f9fa;
+    font-size: 0.95em;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+details summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: #333;
+}
+td strong, th strong {
+    font-weight: bold;
+    color: #1a237e;
+}
+a {
+    color: #007bff;
+    text-decoration: underline;
+}
+.pagination { margin: 20px 0; text-align: center; }
+.pagination a { margin: 0 10px; text-decoration: none; color: #007bff; }
+.pagination span { margin: 0 10px; }
+.abstract-container {
+    max-width: 100%;
+    word-break: break-word;
+}
+.abstract-preview {
+    display: -webkit-box;
+    display: box;
+    -webkit-line-clamp: 3; /* Show only 3 lines */
+    line-clamp: 3;  /* Standard property */
+    -webkit-box-orient: vertical;
+    box-orient: vertical;  /* Standard property */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: pre-line;
+    line-height: 1.5;
+    margin-bottom: 5px;
+}
+.abstract-full {
+    display: block;
+    margin-top: 5px;
+    white-space: pre-line;
+    line-height: 1.5;
+}
+.d-none {
+    display: none;
+}
+.toggle-abstract {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+.toggle-abstract:hover {
+    text-decoration: underline;
+}
+</style>
+
+<script>
+function toggleAbstract(button) {
+    const container = button.closest('.abstract-container');
+    const preview = container.querySelector('.abstract-preview');
+    const full = container.querySelector('.abstract-full');
+    
+    if (full.classList.contains('d-none')) {
+        preview.classList.add('d-none');
+        full.classList.remove('d-none');
+        button.textContent = 'Show less';
+    } else {
+        preview.classList.remove('d-none');
+        full.classList.add('d-none');
+        button.textContent = 'Show more';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const allTypesCheckbox = document.querySelector('input[value="all"]');
+    const typeCheckboxes = document.querySelectorAll('input[name="types"]:not([value="all"])');
+    
+    allTypesCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            typeCheckboxes.forEach(cb => {
+                cb.checked = false;
+                cb.disabled = this.checked;
+            });
+        } else {
+            typeCheckboxes.forEach(cb => cb.disabled = false);
+        }
+    });
+    
+    typeCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                allTypesCheckbox.checked = false;
+            }
+            // If no type is selected, select "All Types"
+            const anyChecked = Array.from(typeCheckboxes).some(cb => cb.checked);
+            if (!anyChecked) {
+                allTypesCheckbox.checked = true;
+                typeCheckboxes.forEach(cb => cb.disabled = true);
+            }
+        });
+    });
+    
+    // Initial state
+    if (allTypesCheckbox.checked) {
+        typeCheckboxes.forEach(cb => cb.disabled = true);
+    }
+});
+</script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+{% endblock %}

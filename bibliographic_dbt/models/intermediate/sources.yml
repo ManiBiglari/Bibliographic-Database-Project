@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: DWH # Here we define the target tables as sources so that we can refrence them in our models and avoid loops
+    schema: dwh  
+    tables:
+      - name: entry_type
+#      - name: organization
+      - name: author

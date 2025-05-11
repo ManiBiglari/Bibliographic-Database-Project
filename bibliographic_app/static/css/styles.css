@@ -1,0 +1,114 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+}
+
+h2 {
+    color: #007bff;
+}
+
+/* Table container to allow horizontal scrolling */
+.table-container {
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 10px;
+    white-space: nowrap; /* Prevents text wrapping in cells */
+}
+
+/* Table styling */
+.resizable-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    min-width: 1200px; /* Ensures table does not shrink too much */
+}
+
+/* Resizable column headers */
+.resizable {
+    position: relative;
+    white-space: nowrap;
+    padding-right: 10px;
+    min-width: 250px; /* Increased for a wider initial width */
+    max-width: 600px; /* Allows wider stretching */
+    overflow: hidden;
+    user-select: none; /* Prevents text selection when resizing */
+    word-break: break-word; /* Ensures text remains readable */
+}
+
+/* Table header and data cell styling */
+th, td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    vertical-align: middle;
+    word-wrap: break-word; /* Prevents text overflow */
+}
+
+th {
+    position: sticky;
+    top: 0;
+    background: #f4f4f4;
+    cursor: col-resize;
+    min-width: 250px; /* Increased for a wider initial width */
+    text-align: center;
+    z-index: 2;
+}
+
+/* Resize handle for column resizing */
+.resize-handle {
+    position: absolute;
+    right: -5px; /* Improves positioning */
+    top: 0;
+    width: 8px; /* Enlarges draggable area */
+    height: 100%;
+    cursor: col-resize;
+    background-color: transparent;
+    z-index: 10;
+}
+
+.resize-handle:hover {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.abstract-container {
+    position: relative;
+    max-width: 100%;
+    margin: 10px 0;
+}
+
+.abstract-preview {
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Show only 3 lines */
+    line-clamp: 3; /* Standard property for compatibility */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: pre-line;
+    line-height: 1.5;
+    margin-bottom: 5px;
+}
+
+.abstract-full {
+    display: block;
+    white-space: pre-line;
+}
+
+.d-none {
+    display: none;
+}
+
+.toggle-abstract {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+.toggle-abstract:hover {
+    text-decoration: underline;
+}

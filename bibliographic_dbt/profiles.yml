@@ -1,0 +1,12 @@
+bibliographic_dbt:
+  outputs:
+    dev:
+      dbname: bibliographic_db
+      host: localhost
+      password: '123456'
+      port: 5432
+      schema: dbt
+      threads: 4
+      type: postgres
+      user: admin
+  target: dev

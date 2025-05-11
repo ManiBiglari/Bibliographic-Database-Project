@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "datapilot": {
+      "url": "http://localhost:7700/sse",
+      "type": "sse"
+    }
+  },
+  "mcpServers": {
+    "dbtPowerUser": {
+      "url": "http://localhost:7700/sse"
+    }
+  }
+}

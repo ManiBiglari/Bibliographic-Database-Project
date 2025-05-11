@@ -1,0 +1,7 @@
+version: 2
+
+sources:
+  - name: RAW
+    schema: raw  # This should match the schema where the staging_crossref table resides
+    tables:
+      - name: raw_crossref

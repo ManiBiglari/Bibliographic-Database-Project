@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: postgres:14
+    container_name: bibliographic_db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: bibliographic_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database_init_scripts:/docker-entrypoint-initdb.d
+    networks:
+      - bibliographic_network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: biglari.mani@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: 123456
+    ports:
+      - "8080:80"
+    volumes:
+      - ./pgadmin_config:/pgadmin4/config
+      - ./servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      - postgres
+    networks:
+      - bibliographic_network
+
+  dbt:
+    image: ghcr.io/dbt-labs/dbt-postgres:1.5.2
+    container_name: dbt
+    volumes:
+      - ./bibliographic_dbt:/usr/app/dbt_project
+      - ./bibliographic_dbt/profiles.yml:/root/.dbt/profiles.yml
+    working_dir: /usr/app/dbt_project
+    entrypoint: tail -f /dev/null
+    depends_on:
+      - postgres
+    networks:
+      - bibliographic_network
+
+  airflow:
+    image: airflow-custom
+    container_name: airflow
+    restart: always
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:123456@postgres:5432/bibliographic_db
+      AIRFLOW__CORE__FERNET_KEY: 'vGdepw8v3ZB0BZG5z1m4zSInkM7NCyIuxcHIdQvfoVw='
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
+      _AIRFLOW_WWW_USER_USERNAME: biglari.mani@gmail.com
+      _AIRFLOW_WWW_USER_PASSWORD: 123456
+    command: standalone
+    volumes:
+      - ./airflow_home:/opt/airflow
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+    networks:
+      - bibliographic_network
+
+networks:
+  bibliographic_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
