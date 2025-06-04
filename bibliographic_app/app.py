@@ -127,14 +127,15 @@ def home():
         """
         params.extend([per_page, offset])
 
-        # Build a second WHERE clause that matches the main query’s logic,
-        # i.e. it also limits the rows to the primary author of each title.
-        filtered_where_clause = (
-            "WHERE is_primary_author = true"
-            + (f" AND {' AND '.join(search_conditions)}" if search_conditions else "")
-        )
+        # Build a second WHERE clause that matches the main query's logic,
+        # but only include is_primary_author condition when there are search conditions
+        if search_conditions:
+            filtered_where_clause = "WHERE is_primary_author = true AND " + " AND ".join(search_conditions)
+        else:
+            filtered_where_clause = ""
+            
         # Keep the params list for the filtered‑count query in sync
-        filtered_params = tuple(params[:-2]) if params else ()
+        filtered_params = tuple(params[:-2]) if search_conditions else ()
 
         filtered_count_sql = f"""
             SELECT entry_type_name, COUNT(DISTINCT title) AS count
